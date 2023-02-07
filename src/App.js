@@ -1,41 +1,85 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ChakraProvider,
   Box,
-  Text,
-  Link,
-  VStack,
-  Code,
-  Grid,
   theme,
+  Container,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
+  Button,
 } from '@chakra-ui/react';
-import { ColorModeSwitcher } from './ColorModeSwitcher';
-import { Logo } from './Logo';
+
+async function notifyUser(
+  notificationText = 'Thank you for enabling notifications'
+) {
+  let notification;
+  if (!('Notification' in window)) {
+    alert("Browser doesn't support notifications");
+  } else if (Notification.permission === 'granted') {
+    notification = new Notification(notificationText);
+  } else if (Notification.permission !== 'denied') {
+    await Notification.requestPermission().then(permission => {
+      if (permission === 'granted') {
+        notification = new Notification(notificationText);
+      }
+    });
+  }
+
+  return notification;
+}
 
 function App() {
-  return (
+  const [userResponsed, setUserResponsed] = useState(false);
+
+  const enableNotifAndClose = async () => {
+    await notifyUser().then(() => {
+      setUserResponsed(true);
+    });
+  };
+
+  const disableNotifAndClose = () => {
+    setUserResponsed(true);
+  };
+
+  return !userResponsed && !(Notification.permission === 'granted') ? (
     <ChakraProvider theme={theme}>
-      <Box textAlign="center" fontSize="xl">
-        <Grid minH="100vh" p={3}>
-          <ColorModeSwitcher justifySelf="flex-end" />
-          <VStack spacing={8}>
-            <Logo h="40vmin" pointerEvents="none" />
-            <Text>
-              Edit <Code fontSize="xl">src/App.js</Code> and save to reload.
-            </Text>
-            <Link
-              color="teal.500"
-              href="https://chakra-ui.com"
-              fontSize="2xl"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learn Chakra
-            </Link>
-          </VStack>
-        </Grid>
-      </Box>
+      <Container>
+        <Alert status="success">
+          <AlertIcon />
+          <Box>
+            <AlertTitle>Notification</AlertTitle>
+            <AlertDescription>
+              Would you like to enable notification
+            </AlertDescription>
+          </Box>
+          <Button colorScheme="teal" size="sm" onClick={enableNotifAndClose}>
+            Sure!
+          </Button>
+          <Button colorScheme="teal" size="sm" onClick={disableNotifAndClose}>
+            No thanks!
+          </Button>
+        </Alert>
+      </Container>
     </ChakraProvider>
+  ) : Notification.permission === 'granted' ? (
+    <ChakraProvider theme={theme}>
+      <Container>
+        <h1>Testing Notification</h1>
+        <Button
+          colorScheme="green"
+          size="sm"
+          onClick={() => notifyUser('Notification is working great!!')}
+        >
+          Click to show message !
+        </Button>
+      </Container>
+    </ChakraProvider>
+  ) : (
+    <>
+      <h1>You have disabled notification</h1>
+    </>
   );
 }
 
